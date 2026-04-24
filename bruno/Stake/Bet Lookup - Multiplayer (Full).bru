@@ -1,0 +1,111 @@
+meta {
+  name: Bet Lookup - Multiplayer (Full)
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{stakeApiUrl}}
+  body: graphql
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  User-Agent: {{userAgent}}
+  Cookie: cf_clearance={{clearanceCookie}}
+  Accept: application/json
+  Origin: https://stake.games
+  Referer: https://stake.games/
+  ~x-access-token: {{accessToken}}
+}
+
+body:graphql {
+  query Bet($iid: String!) {
+    bet(iid: $iid) {
+      iid
+      type
+      bet {
+        ... on CasinoBet {
+          id
+          game
+          nonce
+          clientSeed {
+            id
+            seed
+            __typename
+          }
+          serverSeed {
+            id
+            seed
+            seedHash
+            __typename
+          }
+          __typename
+        }
+        ... on MultiplayerCrashBet {
+          id
+          crashGame: game {
+            id
+            seed {
+              id
+              seed
+              __typename
+            }
+            hash {
+              id
+              hash
+              number
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+        ... on MultiplayerSlideBet {
+          id
+          slideGame: game {
+            id
+            seed {
+              id
+              seed
+              __typename
+            }
+            hash {
+              id
+              hash
+              number
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "iid": "{{sampleBetId}}"
+  }
+}
+
+docs {
+  # Full Bet Lookup (All Types)
+
+  Supports all bet types — CasinoBet, MultiplayerCrashBet, MultiplayerSlideBet.
+  The query uses fragments to return the correct fields automatically; check
+  `__typename` in the response to identify the type.
+
+  Requires `clearanceCookie` and `userAgent` to be set in the environment.
+  Run **Admin → Fetch Clearance** to populate these automatically from the app.
+
+  ## Troubleshooting
+
+  - **403** — Clearance cookie expired; run `npm run capture` from `stake-clearance/`
+  - **Null response** — Bet ID not found or invalid format
+}

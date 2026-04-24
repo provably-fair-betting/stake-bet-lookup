@@ -1,0 +1,14 @@
+app/vendor/
+app/packages/
+app/node_modules/
+app/storage/logs/
+app/.env
+scripts/
+docs/
+planning/
+bruno-collection/
+vendor/
+tests/
+.git/
+*.md
+.env*

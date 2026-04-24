@@ -1,0 +1,49 @@
+meta {
+  name: Test Clearance
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/admin/test-clearance
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+docs {
+  # Test Clearance
+
+  Probes `stake.games` with the current clearance credentials to verify they are
+  still accepted by Cloudflare.
+
+  Use this after updating credentials to confirm they work end-to-end.
+
+  ## Response (success)
+
+  ```json
+  {
+    "success": true,
+    "message": "Clearance is working",
+    "status_code": 200
+  }
+  ```
+
+  ## Response (expired)
+
+  ```json
+  {
+    "success": false,
+    "error": "Clearance expired",
+    "status_code": 403
+  }
+  ```
+
+  ## Errors
+
+  - `400` — Credentials not configured (run Update Clearance first)
+  - `401` — Missing or invalid Bearer token
+}

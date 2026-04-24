@@ -1,0 +1,59 @@
+meta {
+  name: Update Clearance
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/admin/update-clearance
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "clearance": "paste-cf_clearance-value-here",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "expiry": 9999999999
+  }
+}
+
+docs {
+  # Update Clearance
+
+  Updates the Cloudflare clearance cookie used to authenticate requests to Stake.
+
+  Run `npm run capture` from the `stake-clearance/` directory to capture fresh
+  credentials and push them to the app automatically via this endpoint.
+
+  ## Request
+
+  | Field       | Type    | Description                              |
+  |-------------|---------|------------------------------------------|
+  | `clearance` | string  | The `cf_clearance` cookie value          |
+  | `userAgent` | string  | User agent string from the same browser  |
+  | `expiry`    | integer | Unix timestamp when the cookie expires   |
+
+  ## Response
+
+  ```json
+  {
+    "success": true,
+    "message": "Clearance credentials updated successfully",
+    "expires_at": "2025-01-15 12:00:00"
+  }
+  ```
+
+  ## Errors
+
+  - `401` — Missing or invalid Bearer token
+  - `422` — Validation failed (missing fields or expired `expiry`)
+}

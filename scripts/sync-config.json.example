@@ -1,0 +1,7 @@
+{
+  "method": "api",
+  "api": {
+    "endpoint": "http://nginx/api/admin/update-clearance",
+    "token": "<raw-admin-token>"
+  }
+}

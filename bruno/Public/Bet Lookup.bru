@@ -1,0 +1,47 @@
+meta {
+  name: Bet Lookup
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/bet-lookup
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "betId": "{{sampleBetId}}"
+  }
+}
+
+docs {
+  # Bet Lookup
+
+  Public endpoint — no authentication required.
+
+  ## Request
+
+  | Field   | Type   | Description                          |
+  |---------|--------|--------------------------------------|
+  | `betId` | string | Bet identifier, format: `house:\d+`  |
+
+  ## Example
+
+  ```json
+  { "betId": "house:464957124440" }
+  ```
+
+  ## Responses
+
+  - `200` — Bet data (casino, crash, or slide type)
+  - `422` — Invalid `betId` format
+  - `404` — Bet not found
+  - `503` — Clearance expired / maintenance mode
+  - `429` — Rate limit exceeded
+}

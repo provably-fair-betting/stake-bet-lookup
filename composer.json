@@ -1,0 +1,36 @@
+{
+    "name": "stake/bet-lookup",
+    "description": "Laravel package for Stake.games bet lookup and GraphQL proxy",
+    "type": "library",
+    "version": "1.0.0",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Stake\\BetLookup\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Stake\\BetLookup\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Stake\\BetLookup\\BetLookupServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.2|^8.3",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "phpunit/phpunit": "^10.0|^11.0"
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit --no-coverage",
+        "coverage": "vendor/bin/phpunit --coverage-html=coverage"
+    }
+}

@@ -1,0 +1,48 @@
+meta {
+  name: Clearance Status
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/admin/clearance-status
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+docs {
+  # Clearance Status
+
+  Returns the current state of the Cloudflare clearance credentials.
+
+  ## Response
+
+  ```json
+  {
+    "success": true,
+    "data": {
+      "is_valid": true,
+      "is_expiring_soon": false,
+      "status": "valid",
+      "time_until_expiry": 86400,
+      "expires_at": "2025-01-16 12:00:00",
+      "clearance_cookie_set": true,
+      "user_agent_set": true,
+      "maintenance_mode": false
+    }
+  }
+  ```
+
+  ## Status Values
+
+  | `status`        | Meaning                                      |
+  |-----------------|----------------------------------------------|
+  | `valid`         | Credentials are set and not expiring soon    |
+  | `expiring_soon` | Credentials expire within the warning window |
+  | `expired`       | Credentials have expired                     |
+  | `not_set`       | No credentials configured                    |
+}

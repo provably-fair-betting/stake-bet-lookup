@@ -1,0 +1,8 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "php",
+      "changelog-path": "CHANGELOG.md"
+    }
+  }
+}

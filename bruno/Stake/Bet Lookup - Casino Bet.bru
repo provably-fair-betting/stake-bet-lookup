@@ -1,0 +1,77 @@
+meta {
+  name: Bet Lookup - Casino Bet
+  type: graphql
+  seq: 1
+}
+
+post {
+  url: {{stakeApiUrl}}
+  body: graphql
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  User-Agent: {{userAgent}}
+  Cookie: cf_clearance={{clearanceCookie}}
+  Accept: application/json
+  Origin: https://stake.games
+  Referer: https://stake.games/
+  ~x-access-token: {{accessToken}}
+}
+
+body:graphql {
+  query Bet($iid: String!) {
+    bet(iid: $iid) {
+      iid
+      type
+      bet {
+        ... on CasinoBet {
+          id
+          game
+          nonce
+          clientSeed {
+            id
+            seed
+            __typename
+          }
+          serverSeed {
+            id
+            seed
+            seedHash
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "iid": "{{sampleBetId}}"
+  }
+}
+
+docs {
+  # Casino Bet Lookup
+
+  Fetches casino bet data directly from the Stake.games GraphQL API.
+
+  Requires `clearanceCookie` and `userAgent` to be set in the environment.
+  Run **Admin → Fetch Clearance** to populate these automatically from the app.
+
+  ## Response
+
+  - `game`: Game identifier (dice, limbo, plinko, etc.)
+  - `nonce`: The nonce value
+  - `clientSeed` / `serverSeed`: Provability seeds and hash
+
+  ## Troubleshooting
+
+  - **403** — Clearance cookie expired; run `npm run capture` from `stake-clearance/`
+  - **Null response** — Bet ID not found or invalid format
+}

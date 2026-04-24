@@ -1,0 +1,24 @@
+{
+  "name": "stake-bet-lookup-scripts",
+  "version": "1.0.0",
+  "description": "Utility scripts for capturing Stake.games clearance cookies and testing the API",
+  "type": "module",
+  "scripts": {
+    "capture": "node capture-clearance.mjs"
+  },
+  "keywords": [
+    "stake",
+    "api",
+    "cloudflare",
+    "clearance",
+    "graphql"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer-real-browser": "^1.3.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
