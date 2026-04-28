@@ -55,14 +55,18 @@ jobs:
           php -r "
             \$xml    = simplexml_load_file('coverage.xml');
             \$m      = \$xml->project->metrics;
-            \$line   = round((int)\$m['coveredstatements'] / max(1, (int)\$m['statements']) * 100, 1);
-            \$branch = round((int)\$m['coveredbranches']   / max(1, (int)\$m['branches'])   * 100, 1);
+            echo 'Metrics: ' . print_r((array)\$m, true) . PHP_EOL;
+            \$line   = round((int)\$m['coveredstatements']   / max(1, (int)\$m['statements'])   * 100, 1);
+            \$branch = round((int)\$m['coveredconditionals'] / max(1, (int)\$m['conditionals']) * 100, 1);
+            echo \"Line: \$line%, Branch: \$branch%\" . PHP_EOL;
             \$color  = fn(\$p) => \$p >= 90 ? 'brightgreen' : (\$p >= 70 ? 'yellow' : 'red');
             \$readme = file_get_contents('README.md');
             \$readme = preg_replace('/badge\/Lines-[^-]*%25-[a-z]+/',    'badge/Lines-'   . \$line   . '%25-' . \$color(\$line),   \$readme);
             \$readme = preg_replace('/badge\/Branches-[^-]*%25-[a-z]+/', 'badge/Branches-'. \$branch . '%25-' . \$color(\$branch), \$readme);
             file_put_contents('README.md', \$readme);
           "
+          echo "--- README badge lines ---"
+          grep "badge/" README.md
 
       - name: Commit updated badges
         run: |
