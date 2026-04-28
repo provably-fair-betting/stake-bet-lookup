@@ -1,13 +1,47 @@
+[![CI](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/ci.yml/badge.svg)](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/ci.yml)
+[![Release](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/release.yml/badge.svg)](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/release.yml)
+
 # Production Setup
 
 How to install and configure the Stake Bet Lookup package in an existing Laravel application.
 
 ---
 
+## Access
+
+This is a private package. Before installing you need GitHub access granted by the maintainer, and Composer configured to authenticate with GitHub.
+
+**1. Generate a GitHub personal access token**
+
+Go to github.com → Settings → Developer settings → Personal access tokens → Generate new token. The token needs `repo` (read) scope.
+
+**2. Authenticate Composer**
+
+```bash
+composer config --global github-oauth.github.com <your-personal-access-token>
+```
+
+**3. Add the repository to your `composer.json`**
+
+```json
+{
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "git@github.com:provably-fair-betting/stake-bet-lookup.git"
+    }
+  ]
+}
+```
+
+Then follow the steps below.
+
+---
+
 ## 1. Install the Package
 
 ```bash
-composer require stake/bet-lookup
+composer require stake/bet-lookup:^1.0
 ```
 
 The service provider is auto-discovered — no manual registration needed.
@@ -166,7 +200,7 @@ Clearance credentials expire periodically (usually within days). When they do:
 3. From `stake-clearance/`: run `npm run capture`
 4. The API resumes immediately — no restart or deployment needed
 
-See the [clearance management guide](../docs/clearance-management.md) for the full operational reference including status checks and token rotation.
+See the [clearance management guide](docs/clearance-management.md) for the full operational reference including status checks and token rotation.
 
 ---
 
