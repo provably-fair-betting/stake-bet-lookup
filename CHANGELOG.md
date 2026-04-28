@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1](https://github.com/provably-fair-betting/stake-bet-lookup/compare/v1.0.0...v1.0.1) (2026-04-28)
+
+
+### Miscellaneous Chores
+
+* opt into Node.js 24 for release-please action ([1f49616](https://github.com/provably-fair-betting/stake-bet-lookup/commit/1f496162b2ac7374a19a5acbd43d8bff510f352d))
+
 ## [1.0.0] - 2026-04-28
 
 ### Added
