@@ -29,3 +29,53 @@ jobs:
 
       - name: Run tests
         run: vendor/bin/phpunit --no-coverage
+
+  coverage:
+    runs-on: ubuntu-latest
+    name: Coverage
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: pcov
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run tests with coverage
+        run: vendor/bin/phpunit --coverage-clover=coverage.xml
+
+      - name: Update coverage badges
+        run: |
+          php -r "
+            \$xml = simplexml_load_file('coverage.xml');
+            \$m   = \$xml->project->metrics;
+            \$line   = round((int)\$m['coveredstatements'] / max(1, (int)\$m['statements']) * 100, 1);
+            \$branch = round((int)\$m['coveredbranches']   / max(1, (int)\$m['branches'])   * 100, 1);
+            \$color  = fn(\$p) => \$p >= 90 ? 'brightgreen' : (\$p >= 70 ? 'yellow' : 'red');
+            file_put_contents('badge.env',
+              'LINE_PCT='   . \$line   . PHP_EOL .
+              'LINE_COLOR=' . \$color(\$line)   . PHP_EOL .
+              'BRANCH_PCT=' . \$branch . PHP_EOL .
+              'BRANCH_COLOR=' . \$color(\$branch) . PHP_EOL
+            );
+          "
+          source badge.env && rm badge.env
+          sed -i "s|badge/Lines-[^-]*%25-[a-z]*|badge/Lines-${LINE_PCT}%25-${LINE_COLOR}|g" README.md
+          sed -i "s|badge/Branches-[^-]*%25-[a-z]*|badge/Branches-${BRANCH_PCT}%25-${BRANCH_COLOR}|g" README.md
+
+      - name: Commit updated badges
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet README.md || (
+            git pull --rebase origin main
+            git add README.md
+            git commit -m "chore: update coverage badges [skip ci]"
+            git push
+          )

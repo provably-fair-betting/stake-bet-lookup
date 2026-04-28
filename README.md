@@ -1,5 +1,7 @@
 [![CI](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/ci.yml/badge.svg)](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/ci.yml)
-[![Release](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/release.yml/badge.svg)](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/release.yml)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue)](https://github.com/provably-fair-betting/stake-bet-lookup/releases/latest)
+[![Lines](https://img.shields.io/badge/Lines-0%25-red)](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/ci.yml)
+[![Branches](https://img.shields.io/badge/Branches-0%25-red)](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/ci.yml)
 
 # Production Setup
 
