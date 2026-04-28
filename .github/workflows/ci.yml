@@ -74,8 +74,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git diff --quiet README.md || (
-            git pull --rebase origin main
             git add README.md
+            git pull --rebase origin main
             git commit -m "chore: update coverage badges [skip ci]"
             git push
           )
