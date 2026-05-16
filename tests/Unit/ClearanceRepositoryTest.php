@@ -94,9 +94,9 @@ class ClearanceRepositoryTest extends TestCase
     // -------------------------------------------------------------------------
 
     #[Test]
-    public function it_is_valid_when_no_expiry_set(): void
+    public function it_is_invalid_when_no_credentials_set(): void
     {
-        $this->assertTrue($this->makeRepo()->isValid());
+        $this->assertFalse($this->makeRepo()->isValid());
     }
 
     #[Test]
