@@ -9,38 +9,20 @@ How to install and configure the Stake Bet Lookup package in an existing Laravel
 
 ---
 
-## Access
+## 1. Install the Package
 
-This is a private package. Before installing you need GitHub access granted by the maintainer, and Composer configured to authenticate with GitHub.
-
-**1. Generate a GitHub personal access token**
-
-Go to github.com → Settings → Developer settings → Personal access tokens → Generate new token. The token needs `repo` (read) scope.
-
-**2. Authenticate Composer**
-
-```bash
-composer config --global github-oauth.github.com <your-personal-access-token>
-```
-
-**3. Add the repository to your `composer.json`**
+Add the repository to your `composer.json` and require the package:
 
 ```json
 {
   "repositories": [
     {
       "type": "vcs",
-      "url": "git@github.com:provably-fair-betting/stake-bet-lookup.git"
+      "url": "https://github.com/provably-fair-betting/stake-bet-lookup.git"
     }
   ]
 }
 ```
-
-Then follow the steps below.
-
----
-
-## 1. Install the Package
 
 ```bash
 composer require stake/bet-lookup:^1.0
