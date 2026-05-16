@@ -1,24 +1,23 @@
 # Local Development
 
-The `app/` directory is a minimal Laravel harness for developing and testing the package locally. **It does not exist in the repository** — `make setup` creates it. It is gitignored and not part of the distributed package.
+The Docker image bootstraps a complete Laravel environment from scratch — no local PHP, Composer, or `app/` directory required. All app code is baked into the image at build time; secrets are injected at runtime via environment variables.
 
 ---
 
 ## Prerequisites
 
 - Docker and Docker Compose
-- Composer
-- Node.js 18+
+- Node.js 18+ (for the Cloudflare clearance capture script)
 
 ---
 
 ## Quickstart
 
 ```bash
-make setup      # Create app/, generate APP_KEY and admin token, install Node deps
-make up         # Start services
-make migrate    # Run migrations
-make capture    # Open browser, complete the Cloudflare challenge, then sync into the app
+make setup    # Copy .env, build image, generate APP_KEY + admin token, install capture deps
+make up       # Start services
+make migrate  # Run database migrations (first time only)
+make capture  # Open browser, complete the Cloudflare challenge, sync credentials
 ```
 
 No manual `.env` edits required — `make setup` generates everything automatically.
@@ -34,57 +33,50 @@ No manual `.env` edits required — `make setup` generates everything automatica
 | Adminer  | http://localhost:8090      | `make adminer` to start            |
 | MySQL    | localhost:3306             |                                    |
 
-> **Mailpit is local only.** It intercepts all outgoing mail regardless of the `MAIL_FROM_ADDRESS` or recipient. In production you configure a real mail driver — see [production-setup.md](production-setup.md).
-
 ---
 
 ## Commands
 
 ```bash
-make setup      # First-time bootstrap
-make reinstall  # Wipe app/ and re-run setup from scratch
-make up         # Start all services
-make down       # Stop all services
-make restart    # Restart the app container
-make migrate    # Run database migrations
-make capture    # Capture clearance credentials and sync (skips if still valid)
-make capture force=1  # Force renewal even if clearance is still valid
-make token      # Rotate the admin token
-make shell      # Shell into the app container
-make logs       # Tail app container logs
-make db         # Open a MySQL shell
-make adminer    # Start Adminer UI at http://localhost:8090
+make setup            # First-time setup
+make up               # Start all services
+make down             # Stop all services
+make restart          # Restart the app container
+make migrate          # Run database migrations
+make capture          # Capture clearance (skips if still valid)
+make capture force=1  # Force capture even if clearance is still valid
+make token            # Rotate the admin token
+make shell            # Shell into the app container
+make logs             # Tail app container logs
+make db               # Open a MySQL shell
+make adminer          # Start Adminer UI at http://localhost:8090
+make reset            # Wipe Docker volumes (fresh database)
 ```
 
 ---
 
 ## How `make setup` Works
 
-`make setup` executes the same numbered steps as [README.md](../README.md), logging each one as it runs:
+1. Copies `.env.example` → `.env` (if `.env` doesn't exist)
+2. Builds the Docker image — Laravel is bootstrapped inside Docker; no local Composer needed
+3. Generates `APP_KEY` via the built image and writes it to `.env`
+4. Generates an admin token pair — hash written to `.env`, raw token written to `scripts/sync-config.json`
+5. Installs Node deps in `scripts/` for the capture script
 
-| Step | Title | Notes |
-|------|-------|-------|
-| 1 | Install the Package | `composer create-project` + path repository |
-| 2 | Publish Config and Migrations | `vendor:publish` for config and migrations |
-| 3 | Run Migrations | Skipped — run `make migrate` after `make up` |
-| 4 | Configure Environment Variables | `.env.example` → `app/.env` (done during step 1; step 4 confirms defaults) |
-| 5 | Generate an Admin Token | Hash → `app/.env`, raw → `sync-config.json` |
-| 6 | Configure the Mail Driver | Skipped — Mailpit handles all local email |
-| 7 | Publish and Install the Capture Scripts | `vendor:publish` → `app/stake-clearance/` + `app/stake-bruno/`, then `npm install` |
-| 8 | Capture Initial Clearance Credentials | Skipped — run `make capture` |
-
-After `make setup`, `make capture` works immediately — no manual configuration needed.
+After `make setup`, `make capture` works immediately.
 
 ---
 
 ## Clearance Renewal
 
+Cloudflare clearance credentials expire periodically. When they do, the API returns `503` for all bet lookups:
+
 ```bash
-make capture          # Capture + sync in one step (skips capture if still valid)
-make capture force=1  # Force renewal even if clearance is still valid
+make capture          # Capture + sync (skips if still valid)
+make capture force=1  # Force renewal
 ```
 
-`make capture` opens a Chrome window, waits for the Cloudflare challenge, then POSTs credentials directly to the running app. Maintenance mode clears automatically.
+`make capture` opens a Chrome window at stake.games, waits for you to complete the challenge, then POSTs credentials directly to the running app.
 
 ---
 
@@ -94,4 +86,14 @@ make capture force=1  # Force renewal even if clearance is still valid
 make token
 ```
 
-Generates a new token pair, writes the hash to `app/.env`, and prints the raw token. Update `app/stake-clearance/sync-config.json` with the new raw token, then run `make restart`.
+Generates a new token pair, writes the hash to `.env` and the raw token to `scripts/sync-config.json`, then prompts you to `make restart`.
+
+---
+
+## Rebuilding After Package Changes
+
+The app code is baked into the image. After editing package source:
+
+```bash
+make up  # rebuilds the image automatically (--build is passed)
+```

@@ -137,7 +137,13 @@ class ClearanceRepository
 
     public function isValid(): bool
     {
-        $expiry = $this->getCredentials()['expiry'] ?? null;
+        $credentials = $this->getCredentials();
+
+        if (empty($credentials['clearance_cookie'])) {
+            return false;
+        }
+
+        $expiry = $credentials['expiry'] ?? null;
 
         return $expiry === null || time() < $expiry;
     }

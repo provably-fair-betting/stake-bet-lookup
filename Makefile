@@ -1,95 +1,60 @@
 SHELL := /bin/zsh
 DIV   := ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-.PHONY: setup reinstall reset up down restart shell migrate logs capture token test coverage db adminer
+.PHONY: setup up down restart shell migrate logs capture token test coverage db adminer reset
 
-## Steps 1–2, 4–7 from README.md (run once)
+## First-time setup: copy .env, build image, generate secrets, install capture deps
 setup:
-	@if [ ! -d "app" ]; then \
-		echo ""; \
-		echo "$(DIV)"; \
-		echo "  Stake Bet Lookup — Local Dev Setup"; \
-		echo "  Following README.md"; \
-		echo "$(DIV)"; \
-		echo ""; \
-		\
-		echo "Step 1 — Install the Package"; \
-		composer create-project laravel/laravel:^12.0 app --prefer-dist --no-install --no-scripts --quiet; \
-		cp .env.example app/.env; \
-		(cd app && composer config platform.php 8.2 \
-			&& composer config repositories.bet-lookup '{"type":"path","url":".."}' \
-			&& composer require stake/bet-lookup --quiet); \
-		echo "<?php" > app/routes/web.php; \
-		rm -rf app/resources/js app/resources/css app/resources/views app/tests; \
-		rm -f app/package.json app/vite.config.js app/.editorconfig; \
-		(cd app && php artisan key:generate --ansi && php artisan package:discover --quiet); \
-		echo "  ✓"; \
-		echo ""; \
-		\
-		echo "Step 2 — Publish Config and Migrations"; \
-		(cd app && php artisan vendor:publish --tag=bet-lookup-config --quiet \
-			&& php artisan vendor:publish --tag=bet-lookup-migrations --quiet); \
-		echo "  ✓ config/bet-lookup.php and database/migrations/ published"; \
-		echo ""; \
-		\
-		echo "Step 3 — Run Migrations"; \
-		echo "  (skipped here — run 'make up' then 'make migrate')"; \
-		echo ""; \
-		\
-		echo "Step 4 — Configure Environment Variables"; \
-		echo "  ✓ .env.example copied to app/.env — defaults are set for local Docker"; \
-		echo ""; \
-		\
-		echo "Step 5 — Generate an Admin Token"; \
-		TOKEN=$$(openssl rand -hex 32); \
-		HASH=$$(php -r "echo hash('sha256', '$$TOKEN');"); \
-		sed -i.bak "s|^STAKE_ADMIN_TOKEN=.*|STAKE_ADMIN_TOKEN=$$HASH|" app/.env && rm app/.env.bak; \
-		echo "  Raw   → app/stake-clearance/sync-config.json (written in step 7)"; \
-		echo "  Hash  → app/.env STAKE_ADMIN_TOKEN"; \
-		echo "  ✓"; \
-		echo ""; \
-		\
-		echo "Step 6 — Configure the Mail Driver"; \
-		echo "  ✓ Mailpit catches all local email — no config needed (http://localhost:8025)"; \
-		echo ""; \
-		\
-		echo "Step 7 — Publish and Install the Capture Scripts"; \
-		(cd app && php artisan vendor:publish --tag=bet-lookup-scripts --quiet); \
-		printf '{\n  "api": {\n    "endpoint": "http://localhost:8080/api/admin/update-clearance",\n    "token": "%s"\n  }\n}\n' "$$TOKEN" > app/stake-clearance/sync-config.json; \
-		(cd app/stake-clearance && npm install --silent); \
-		(cd app && php artisan vendor:publish --tag=bet-lookup-bruno --quiet); \
-		echo "  ✓ scripts published to app/stake-clearance/"; \
-		echo "  ✓ Bruno collection published to app/stake-bruno/"; \
-		echo ""; \
-		\
-		echo "$(DIV)"; \
-		echo "  Setup complete!"; \
-		echo ""; \
-		echo "  Next:"; \
-		echo "    make up       — start Docker services"; \
-		echo "    make migrate  — Step 3: Run Migrations"; \
-		echo "    make capture  — Step 8: Capture Initial Clearance Credentials"; \
-		echo "$(DIV)"; \
-		echo ""; \
-	else \
-		echo "app/ already exists — run 'make reinstall' to start from scratch."; \
+	@echo ""
+	@echo "$(DIV)"
+	@echo "  Stake Bet Lookup — Setup"
+	@echo "$(DIV)"
+	@echo ""
+	@if [ ! -f ".env" ]; then \
+		cp .env.example .env; \
+		echo "  → .env created from .env.example"; \
 	fi
-
-## Wipe app/ and re-run setup from scratch
-reinstall:
-	-chmod -RN app 2>/dev/null
-	rm -rf app
-	$(MAKE) setup
-
-## Wipe all Docker volumes (fresh DB + vendor) — use when migrations are stale
-reset:
-	docker compose down -v --remove-orphans
+	@echo "  → Building image (this takes a minute on first run)..."
+	@docker build -t stake-bet-lookup:local . --progress=plain
+	@APP_KEY_VAL=$$(grep "^APP_KEY=" .env | cut -d'=' -f2-); \
+	if [ -z "$$APP_KEY_VAL" ]; then \
+		KEY=$$(docker run --rm --entrypoint php stake-bet-lookup:local artisan key:generate --show); \
+		sed -i.bak "s|^APP_KEY=.*|APP_KEY=$$KEY|" .env && rm .env.bak; \
+		echo "  ✓ APP_KEY generated"; \
+	else \
+		echo "  ✓ APP_KEY already set"; \
+	fi
+	@ADMIN_VAL=$$(grep "^STAKE_ADMIN_TOKEN=" .env | cut -d'=' -f2-); \
+	if [ -z "$$ADMIN_VAL" ]; then \
+		RAW=$$(openssl rand -hex 32); \
+		HASH=$$(printf '%s' "$$RAW" | openssl dgst -sha256 | awk '{print $$NF}'); \
+		sed -i.bak "s|^STAKE_ADMIN_TOKEN=.*|STAKE_ADMIN_TOKEN=$$HASH|" .env && rm .env.bak; \
+		printf '{\n  "method": "api",\n  "api": {\n    "endpoint": "http://localhost:%s/api/admin/update-clearance",\n    "token": "%s"\n  }\n}\n' "$${PORT:-8080}" "$$RAW" > scripts/sync-config.json; \
+		echo "  ✓ STAKE_ADMIN_TOKEN generated"; \
+		echo "  ✓ scripts/sync-config.json written"; \
+	else \
+		echo "  ✓ STAKE_ADMIN_TOKEN already set"; \
+	fi
+	@if [ ! -d "scripts/node_modules" ]; then \
+		(cd scripts && npm install --silent); \
+		echo "  ✓ Capture script deps installed"; \
+	fi
+	@echo ""
+	@echo "$(DIV)"
+	@echo "  Setup complete!"
+	@echo ""
+	@echo "  Next:"
+	@echo "    make up       — start all services"
+	@echo "    make migrate  — run database migrations (first time)"
+	@echo "    make capture  — capture Cloudflare clearance credentials"
+	@echo "$(DIV)"
+	@echo ""
 
 ## Start all services
 up:
 	docker compose up -d --build
 	@echo ""
-	@echo "  App:     http://localhost:8080"
+	@echo "  App:     http://localhost:$${PORT:-8080}"
 	@echo "  Mailpit: http://localhost:8025"
 	@echo ""
 	@echo "  First time? Run: make migrate"
@@ -97,9 +62,9 @@ up:
 
 ## Stop all services
 down:
-	docker compose --profile tools down --remove-orphans
+	docker compose --profile tools down -v --remove-orphans
 
-## Restart app container
+## Restart the app container
 restart:
 	docker compose restart app
 
@@ -107,19 +72,59 @@ restart:
 shell:
 	docker compose exec app bash
 
-## Step 3 — Run Migrations
+## Run database migrations
 migrate:
 	@echo ""
-	@echo "$(DIV)"
-	@echo "  Step 3 — Run Migrations"
-	@echo "$(DIV)"
 	@if [ -z "$$(docker compose ps -q app 2>/dev/null)" ]; then \
 		echo "  ✗ App container is not running — run 'make up' first"; \
 		echo ""; \
 		exit 1; \
 	fi
-	docker compose exec app php artisan migrate
+	docker compose exec app php artisan migrate --force
 	@echo ""
+
+## Tail app container logs
+logs:
+	docker compose logs -f app
+
+## Capture Cloudflare clearance credentials and sync to the running app
+capture:
+	@echo ""
+	@echo "$(DIV)"
+	@echo "  Capture Clearance Credentials"
+	@echo "$(DIV)"
+	@VALID=$$(docker compose exec -T app php artisan stake:check-clearance 2>&1 | grep -c "^Status: Active"); \
+	if [ "$$VALID" != "0" ] && [ "$(force)" != "1" ]; then \
+		echo "  Clearance still valid — skipping."; \
+		echo "  Run 'make capture force=1' to force renewal."; \
+		echo ""; \
+	else \
+		echo "  → Opening browser at https://stake.games"; \
+		echo "  → Complete the Cloudflare challenge"; \
+		echo ""; \
+		(cd scripts && npm run capture); \
+	fi
+
+## Rotate the admin token
+token:
+	@if [ ! -f ".env" ]; then echo "Run make setup first"; exit 1; fi
+	@echo ""
+	@echo "$(DIV)"
+	@echo "  Admin Token Rotation"
+	@echo "$(DIV)"
+	@RAW=$$(openssl rand -hex 32); \
+	HASH=$$(printf '%s' "$$RAW" | openssl dgst -sha256 | awk '{print $$NF}'); \
+	sed -i.bak "s|^STAKE_ADMIN_TOKEN=.*|STAKE_ADMIN_TOKEN=$$HASH|" .env && rm .env.bak; \
+	printf '{\n  "method": "api",\n  "api": {\n    "endpoint": "http://localhost:%s/api/admin/update-clearance",\n    "token": "%s"\n  }\n}\n' "$${PORT:-8080}" "$$RAW" > scripts/sync-config.json; \
+	echo "  ✓ New token written to .env and scripts/sync-config.json"; \
+	echo ""; \
+	echo "  Run 'make restart' to apply."
+	@echo ""
+
+## Wipe all Docker volumes (fresh database)
+reset:
+	docker compose down -v --remove-orphans
+	@echo "Volumes cleared. Run 'make up && make migrate' to restart."
 
 ## Run package test suite
 test:
@@ -137,51 +142,11 @@ coverage:
 		echo ""; \
 	fi
 
-## Tail app logs
-logs:
-	docker compose logs -f app
-
 ## Open a MySQL shell
 db:
-	docker compose exec mysql mysql -u stake -psecret stake_app
+	docker compose exec db mysql -u stake -psecret stake_app
 
 ## Start Adminer database UI (http://localhost:8090)
 adminer:
 	docker compose --profile tools up -d adminer
-	@echo "Adminer: http://localhost:8090  |  Server: mysql  |  User: stake  |  Pass: secret"
-
-## Step 8 — Capture Initial Clearance Credentials
-capture:
-	@echo ""
-	@echo "$(DIV)"
-	@echo "  Step 8 — Capture Initial Clearance Credentials"
-	@echo "$(DIV)"
-	@VALID=$$(docker compose exec -T app php artisan stake:check-clearance 2>&1 | grep -c "Active"); \
-	if [ "$$VALID" != "0" ] && [ "$(force)" != "1" ]; then \
-		echo "  Clearance still valid — skipping."; \
-		echo "  Run 'make capture force=1' to force renewal."; \
-		echo ""; \
-	else \
-		echo "  → Opening browser at https://stake.games"; \
-		echo "  → Complete the Cloudflare challenge"; \
-		echo ""; \
-		(cd app/stake-clearance && npm run capture); \
-	fi
-
-## Admin Token Rotation
-token:
-	@if [ ! -f "app/.env" ]; then echo "Run make setup first"; exit 1; fi
-	@echo ""
-	@echo "$(DIV)"
-	@echo "  Admin Token Rotation"
-	@echo "$(DIV)"
-	@TOKEN=$$(openssl rand -hex 32); \
-	HASH=$$(php -r "echo hash('sha256', '$$TOKEN');"); \
-	sed -i.bak "s|^STAKE_ADMIN_TOKEN=.*|STAKE_ADMIN_TOKEN=$$HASH|" app/.env && rm app/.env.bak; \
-	echo "  Raw token → update app/stake-clearance/sync-config.json:"; \
-	echo "    $$TOKEN"; \
-	echo ""; \
-	echo "  Hash → written to app/.env as STAKE_ADMIN_TOKEN"; \
-	echo ""; \
-	echo "  Run 'make restart' to apply."
-	@echo ""
+	@echo "Adminer: http://localhost:8090  |  Server: db  |  User: stake  |  Pass: secret"
