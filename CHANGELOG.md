@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/provably-fair-betting/stake-bet-lookup/compare/v1.0.2...v1.1.0) (2026-05-16)
+
+
+### Features
+
+* self-contained standalone Docker image ([1ff620f](https://github.com/provably-fair-betting/stake-bet-lookup/commit/1ff620f09052e6254a98c2f3d3799a464891a198))
+
+
+### Bug Fixes
+
+* **tests:** correct isValid test to reflect no-credentials = invalid ([f3cda85](https://github.com/provably-fair-betting/stake-bet-lookup/commit/f3cda8539d761cb1fe9eef86cea19d13eecfb69e))
+
+
+### Miscellaneous Chores
+
+* align release-please changelog sections with verifierform-stake ([3570afc](https://github.com/provably-fair-betting/stake-bet-lookup/commit/3570afcd7e814b260bbb3e2d5e1064d85083bdfc))
+* **bruno:** update sample bet IDs in collection and local env ([a49b382](https://github.com/provably-fair-betting/stake-bet-lookup/commit/a49b3829b6cc9a8588f0313350cb2f37e6c83a5d))
+* suffix version badge commit to prevent CI re-trigger ([cf8ca6f](https://github.com/provably-fair-betting/stake-bet-lookup/commit/cf8ca6f60e5653e172de2baa3e755c2672646589))
+* update version badge to 1.0.2 ([fda5c38](https://github.com/provably-fair-betting/stake-bet-lookup/commit/fda5c384b10db44ab077ba43ec80b92acd69e744))
+
 ## [1.0.2](https://github.com/provably-fair-betting/stake-bet-lookup/compare/v1.0.1...v1.0.2) (2026-04-28)
 
 
