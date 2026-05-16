@@ -16,29 +16,29 @@ headers {
 
 body:json {
   {
-    "betId": "{{sampleBetId}}"
+    "betId": "house:476694353054"
   }
 }
 
 docs {
   # Bet Lookup
-
+  
   Public endpoint — no authentication required.
-
+  
   ## Request
-
+  
   | Field   | Type   | Description                          |
   |---------|--------|--------------------------------------|
   | `betId` | string | Bet identifier, format: `house:\d+`  |
-
+  
   ## Example
-
+  
   ```json
   { "betId": "house:464957124440" }
   ```
-
+  
   ## Responses
-
+  
   - `200` — Bet data (casino, crash, or slide type)
   - `422` — Invalid `betId` format
   - `404` — Bet not found
