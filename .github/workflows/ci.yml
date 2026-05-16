@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        php: ['8.2', '8.3']
+        php: ["8.2", "8.3"]
 
     name: PHP ${{ matrix.php }}
 
@@ -41,7 +41,7 @@ jobs:
 
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: "8.2"
           coverage: xdebug
 
       - name: Install dependencies
@@ -50,27 +50,8 @@ jobs:
       - name: Run tests with coverage
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --path-coverage
 
-      - name: Update coverage badges
-        run: |
-          php -r "
-            \$xml    = simplexml_load_file('coverage.xml');
-            \$m      = \$xml->project->metrics;
-            \$line   = round((int)\$m['coveredstatements']   / max(1, (int)\$m['statements'])   * 100, 1);
-            \$branch = round((int)\$m['coveredconditionals'] / max(1, (int)\$m['conditionals']) * 100, 1);
-            \$color  = fn(\$p) => \$p >= 90 ? 'brightgreen' : (\$p >= 70 ? 'yellow' : 'red');
-            \$readme = file_get_contents('README.md');
-            \$readme = preg_replace('/badge\/Lines-[^-]*%25-[a-z]+/',    'badge/Lines-'   . \$line   . '%25-' . \$color(\$line),   \$readme);
-            \$readme = preg_replace('/badge\/Branches-[^-]*%25-[a-z]+/', 'badge/Branches-'. \$branch . '%25-' . \$color(\$branch), \$readme);
-            file_put_contents('README.md', \$readme);
-          "
-
-      - name: Commit updated badges
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet README.md; then
-            git add README.md &&
-            git commit -m "chore: update coverage badges [skip ci]" &&
-            git pull --rebase origin main &&
-            git push
-          fi
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: provably-fair-betting/stake-bet-lookup
