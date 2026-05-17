@@ -2,47 +2,122 @@
 [![Version](https://img.shields.io/github/v/release/provably-fair-betting/stake-bet-lookup)](https://github.com/provably-fair-betting/stake-bet-lookup/releases/latest)
 [![Coverage](https://codecov.io/gh/provably-fair-betting/stake-bet-lookup/graph/badge.svg)](https://codecov.io/gh/provably-fair-betting/stake-bet-lookup)
 
-# Production Setup
+# stake-bet-lookup
 
-How to install and configure the Stake Bet Lookup package in an existing Laravel application.
+A Laravel package that exposes a public REST API for looking up Stake.games bet data. Given a bet ID, it fetches the provably fair seeds, nonce, and game-specific state from the Stake.games GraphQL API and returns a normalised response ready for use in a verifier frontend.
+
+Stake.games sits behind Cloudflare, so the package manages a `cf_clearance` cookie that must be refreshed periodically. Credentials are stored in the database and pushed in via an admin API — the application itself is stateless between deployments.
 
 ---
 
-## 1. Install the Package
+## API Reference
 
-Add the repository to your `composer.json` and require the package:
+### Public
+
+#### `POST /api/bet-lookup`
+
+Looks up a bet by ID and returns its provably fair inputs.
+
+**Request**
+
+```json
+{ "betId": "house:476694353054" }
+```
+
+**Response — 200 OK**
 
 ```json
 {
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/provably-fair-betting/stake-bet-lookup.git"
+  "success": true,
+  "data": {
+    "betType": "CasinoBet",
+    "game": "mines",
+    "inputs": {
+      "clientSeed": "abc123",
+      "serverSeed": "def456",
+      "serverSeedHash": "ghi789",
+      "nonce": 42,
+      "minesCount": 5
     }
-  ]
+  }
 }
 ```
 
-```bash
-composer require stake/bet-lookup:^1.0
+The `inputs` object always contains `clientSeed`, `serverSeed`, `serverSeedHash`, and `nonce` for casino bets. Games that require additional parameters include extra fields:
+
+| Game | Extra inputs |
+|------|-------------|
+| Mines | `minesCount` |
+| Moles | `molesCount` |
+| Plinko | `risk`, `rows` |
+| Wheel | `risk`, `segments` |
+| Bars | `difficulty`, `tiles` |
+| Cases, Chicken, Darts, Dragon Tower, Pump, Snakes, Tarot | `difficulty` |
+
+For multiplayer bets the response shape differs:
+
+```json
+{
+  "success": true,
+  "data": {
+    "betType": "MultiplayerCrashBet",
+    "game": "crash",
+    "inputs": {
+      "serverSeed": "abc123",
+      "gameHash": "def456"
+    }
+  }
+}
 ```
 
-The service provider is auto-discovered — no manual registration needed.
+**Error responses**
+
+| Status | Cause |
+|--------|-------|
+| `400` | Invalid or missing `betId` (must match `house:\d+`) |
+| `404` | Bet not found |
+| `422` | Server seed not yet revealed |
+| `429` | Rate limit exceeded |
+| `503` | Clearance expired or service in maintenance mode |
+
+All error responses follow the shape `{ "success": false, "error": "..." }`.
 
 ---
 
-## 2. Publish Config and Migrations
+### Admin
+
+All admin endpoints require `Authorization: Bearer <token>` where the token is the raw value whose SHA-256 hash is stored in `STAKE_ADMIN_TOKEN`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/admin/update-clearance` | Push new `cf_clearance` cookie, user agent, and expiry — probes Stake.games before saving |
+| `GET`  | `/api/admin/clearance-status` | Validity, expiry time, and maintenance mode state |
+| `GET`  | `/api/admin/clearance-credentials` | Retrieve the currently stored credentials |
+| `POST` | `/api/admin/test-clearance` | Probe Stake.games live with the current credentials |
+
+---
+
+## Artisan Commands
 
 ```bash
-php artisan vendor:publish --tag=bet-lookup-config
-php artisan vendor:publish --tag=bet-lookup-migrations
+php artisan stake:check-clearance                                    # Status, expiry, and live probe
+php artisan stake:update-clearance <cookie> <user-agent> <expiry>   # Manual credential update
 ```
 
-This copies:
-- `config/bet-lookup.php` — tunable settings (rate limits, timeout)
-- A migration creating the `stake_clearance` table
+---
 
-Optionally publish the Bruno API collection to `stake-bruno/` in your project root:
+## Bruno Collection
+
+A [Bruno](https://www.usebruno.com/) API collection is included in the `bruno/` directory, covering all public and admin endpoints as well as a direct Stake.games GraphQL query for debugging.
+
+To get started:
+
+1. Open the `bruno/` directory as a collection in Bruno
+2. Select the `Local` environment and set `adminToken` to your raw admin token
+3. Run **Admin → Fetch Clearance** — this populates `clearanceCookie` and `userAgent` in the environment automatically
+4. All other requests are ready to use
+
+The collection can also be published into a consumer application:
 
 ```bash
 php artisan vendor:publish --tag=bet-lookup-bruno
@@ -50,168 +125,9 @@ php artisan vendor:publish --tag=bet-lookup-bruno
 
 ---
 
-## 3. Run Migrations
+## Documentation
 
-```bash
-php artisan migrate
-```
-
-Creates the `stake_clearance` table, which persists clearance credentials across deployments and container restarts.
-
----
-
-## 4. Configure Environment Variables
-
-Add to your `.env`:
-
-```env
-# Required
-STAKE_ADMIN_TOKEN=<sha256-hash-of-your-raw-token>   # see Step 5
-STAKE_CLEARANCE_ALERT_EMAIL=you@example.com
-
-# Optional
-STAKE_API_URL=https://stake.games/_api/graphql      # default; rarely needs changing
-STAKE_ACCESS_TOKEN=                                  # x-access-token header, if required
-STAKE_CLEARANCE_WARNING_THRESHOLD=3600               # alert N seconds before expiry
-BET_LOOKUP_RATE_LIMIT=60                             # requests/min on the public endpoint
-BET_LOOKUP_TIMEOUT=10                                # upstream HTTP timeout in seconds
-```
-
-> Clearance credentials (`cf_clearance` cookie, user agent, expiry) are stored in the database after the first capture — they do not live in `.env`.
-
----
-
-## 5. Generate an Admin Token
-
-The admin token protects the `/api/admin/*` endpoints. Your `.env` stores only its SHA-256 hash — the raw token is used as the Bearer token in requests and is never stored server-side.
-
-Generate a token pair on your local machine:
-
-```bash
-TOKEN=$(openssl rand -hex 32)
-HASH=$(php -r "echo hash('sha256', '$TOKEN');")
-echo "Raw token : $TOKEN"
-echo "Hash      : $HASH"
-```
-
-- Set `STAKE_ADMIN_TOKEN=$HASH` in your production `.env`
-- Save `$TOKEN` somewhere safe — you'll need it for the capture scripts in Step 7
-
-After updating `.env`, if you use config caching:
-
-```bash
-php artisan config:cache
-```
-
----
-
-## 6. Configure the Mail Driver
-
-Clearance-expiry alerts are sent via Laravel's mail system. Configure a real driver in `.env`:
-
-```env
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.example.com
-MAIL_PORT=587
-MAIL_USERNAME=your-username
-MAIL_PASSWORD=your-password
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=noreply@your-app.com
-```
-
-Any Laravel-supported driver works (SMTP, SES, Mailgun, Postmark, etc.). Without a working mail driver, expiry alerts will silently fail — the API will still function, but you won't receive warnings before clearance expires.
-
----
-
-## 7. Publish and Install the Capture Scripts
-
-Publish the clearance scripts to your project:
-
-```bash
-php artisan vendor:publish --tag=bet-lookup-scripts
-```
-
-This copies the scripts to `stake-clearance/` in your project root — outside `vendor/`, so they persist across `composer update`. A `.gitignore` is included that excludes `node_modules/` and `sync-config.json` automatically.
-
-Install Node dependencies:
-
-```bash
-cd stake-clearance && npm install
-```
-
-Configure `stake-clearance/sync-config.json` with your endpoint and raw token. On first run the file is created as a template — edit it, then re-run.
-
-```json
-{
-  "api": {
-    "endpoint": "https://your-app.com/api/admin/update-clearance",
-    "token": "<raw token from Step 5>"
-  }
-}
-```
-
-> The `token` field is the **raw token**, not the hash in `.env`.
-
----
-
-## 8. Capture Initial Clearance Credentials
-
-From the `stake-clearance/` directory:
-
-```bash
-npm run capture
-```
-
-Opens Chrome, waits for the Cloudflare challenge, then POSTs credentials directly to your app. The app stores them in the database and cache. `POST /api/bet-lookup` is now live.
-
-Verify it worked:
-
-```bash
-curl -X POST https://your-app.com/api/admin/test-clearance \
-  -H "Authorization: Bearer <raw-token>"
-# → {"success":true,"message":"Clearance is working","status_code":200}
-```
-
----
-
-## Ongoing Renewal
-
-Clearance credentials expire periodically (usually within days). When they do:
-
-1. You receive an alert at `STAKE_CLEARANCE_ALERT_EMAIL`
-2. The API returns `503` for all bet lookup requests
-3. From `stake-clearance/`: run `npm run capture`
-4. The API resumes immediately — no restart or deployment needed
-
-See the [clearance management guide](docs/clearance-management.md) for the full operational reference including status checks and token rotation.
-
----
-
-## Routes Registered
-
-The package registers these routes automatically:
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/api/bet-lookup` | None | Public bet lookup |
-| `POST` | `/api/admin/update-clearance` | Bearer | Push new clearance credentials (probes before saving) |
-| `GET`  | `/api/admin/clearance-status` | Bearer | Validity and expiry info |
-| `GET`  | `/api/admin/clearance-credentials` | Bearer | Retrieve current credentials |
-| `POST` | `/api/admin/test-clearance` | Bearer | Probe stake.games live |
-
----
-
-## Artisan Commands
-
-```bash
-php artisan stake:check-clearance              # Status, expiry, and live probe
-php artisan stake:update-clearance <cookie> <user-agent> <expiry>  # Manual update
-```
-
----
-
-## Development
-
-This repository includes a local development harness (Docker + Makefile) for working on the package itself.
-
-See [docs/local-development.md](docs/local-development.md) for setup instructions.
+- [Production setup](docs/setup.md) — install, configure, and deploy in a Laravel app
+- [Local development](docs/local-development.md) — Docker-based dev environment and Makefile reference
+- [Clearance management](docs/clearance-management.md) — operational guide for credential renewal
+- [Laravel architecture](docs/laravel-architecture.md) — package internals and design decisions
