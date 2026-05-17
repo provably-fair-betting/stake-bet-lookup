@@ -129,6 +129,20 @@ class BetNormalizerServiceTest extends TestCase
         $this->assertEquals(3, $result['inputs']['tiles']);
     }
 
+    // State extraction — unrecognised state type
+
+    #[Test]
+    public function it_ignores_unrecognised_state_types(): void
+    {
+        $result = $this->normalizer->normalize(
+            $this->casinoBetData('dice', ['__typename' => 'CasinoGameDice'])
+        );
+
+        $this->assertArrayNotHasKey('difficulty', $result['inputs']);
+        $this->assertArrayNotHasKey('minesCount', $result['inputs']);
+        $this->assertArrayNotHasKey('risk', $result['inputs']);
+    }
+
     // State extraction — difficulty-only games
 
     #[Test]
