@@ -18,7 +18,7 @@ class BetNormalizerServiceTest extends TestCase
         $this->normalizer = new BetNormalizerService();
     }
 
-    private function casinoBetData(string $game = 'dice'): array
+    private function casinoBetData(string $game = 'dice', ?array $state = null): array
     {
         return [
             'bet' => [
@@ -27,6 +27,7 @@ class BetNormalizerServiceTest extends TestCase
                 'nonce'      => 7,
                 'clientSeed' => ['seed' => 'myclient'],
                 'serverSeed' => ['seed' => 'myserver', 'seedHash' => 'hashxyz'],
+                'state'      => $state,
             ],
         ];
     }
@@ -48,16 +49,106 @@ class BetNormalizerServiceTest extends TestCase
         $this->assertEquals('myserver', $result['inputs']['serverSeed']);
         $this->assertEquals('hashxyz', $result['inputs']['serverSeedHash']);
         $this->assertEquals(7, $result['inputs']['nonce']);
+        $this->assertArrayNotHasKey('difficulty', $result['inputs']);
+        $this->assertArrayNotHasKey('minesCount', $result['inputs']);
+        $this->assertArrayNotHasKey('risk', $result['inputs']);
     }
 
     #[Test]
     public function it_normalizes_casino_bet_for_various_games(): void
     {
-        $games = ['dice', 'limbo', 'hilo', 'mines', 'plinko', 'wheel', 'keno', 'blackjack', 'baccarat', 'roulette'];
+        $games = ['dice', 'limbo', 'hilo', 'keno', 'blackjack', 'baccarat', 'roulette'];
 
         foreach ($games as $game) {
             $result = $this->normalizer->normalize($this->casinoBetData($game));
             $this->assertEquals($game, $result['game'], "Failed for game: {$game}");
+        }
+    }
+
+    // State extraction — mines
+
+    #[Test]
+    public function it_includes_mines_count_in_inputs(): void
+    {
+        $result = $this->normalizer->normalize(
+            $this->casinoBetData('mines', ['minesCount' => 5])
+        );
+
+        $this->assertEquals(5, $result['inputs']['minesCount']);
+        $this->assertArrayNotHasKey('difficulty', $result['inputs']);
+    }
+
+    // State extraction — moles
+
+    #[Test]
+    public function it_includes_moles_count_in_inputs(): void
+    {
+        $result = $this->normalizer->normalize(
+            $this->casinoBetData('moles', ['molesCount' => 3])
+        );
+
+        $this->assertEquals(3, $result['inputs']['molesCount']);
+    }
+
+    // State extraction — plinko
+
+    #[Test]
+    public function it_includes_plinko_risk_and_rows_in_inputs(): void
+    {
+        $result = $this->normalizer->normalize(
+            $this->casinoBetData('plinko', ['plinkoRisk' => 'high', 'plinkoRows' => 16])
+        );
+
+        $this->assertEquals('high', $result['inputs']['risk']);
+        $this->assertEquals(16, $result['inputs']['rows']);
+    }
+
+    // State extraction — wheel
+
+    #[Test]
+    public function it_includes_wheel_risk_and_segments_in_inputs(): void
+    {
+        $result = $this->normalizer->normalize(
+            $this->casinoBetData('wheel', ['wheelRisk' => 'medium', 'wheelSegments' => 20])
+        );
+
+        $this->assertEquals('medium', $result['inputs']['risk']);
+        $this->assertEquals(20, $result['inputs']['segments']);
+    }
+
+    // State extraction — bars
+
+    #[Test]
+    public function it_includes_bars_difficulty_and_tiles_in_inputs(): void
+    {
+        $result = $this->normalizer->normalize(
+            $this->casinoBetData('bars', ['barsDifficulty' => 'hard', 'barsTiles' => 3])
+        );
+
+        $this->assertEquals('hard', $result['inputs']['difficulty']);
+        $this->assertEquals(3, $result['inputs']['tiles']);
+    }
+
+    // State extraction — difficulty-only games
+
+    #[Test]
+    public function it_includes_difficulty_for_difficulty_based_games(): void
+    {
+        $cases = [
+            ['cases',       ['casesDifficulty'       => 'easy']],
+            ['chicken',     ['chickenDifficulty'      => 'medium']],
+            ['darts',       ['dartsDifficulty'        => 'hard']],
+            ['dragontower', ['dragonTowerDifficulty'  => 'expert']],
+            ['pump',        ['pumpDifficulty'         => 'easy']],
+            ['snakes',      ['snakesDifficulty'       => 'master']],
+            ['tarot',       ['tarotDifficulty'        => 'hard']],
+        ];
+
+        foreach ($cases as [$game, $state]) {
+            $result = $this->normalizer->normalize($this->casinoBetData($game, $state));
+            $this->assertArrayHasKey('difficulty', $result['inputs'], "Missing difficulty for {$game}");
+            $this->assertArrayNotHasKey('risk', $result['inputs']);
+            $this->assertArrayNotHasKey('minesCount', $result['inputs']);
         }
     }
 
