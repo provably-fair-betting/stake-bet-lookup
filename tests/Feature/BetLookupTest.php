@@ -26,7 +26,7 @@ class BetLookupTest extends TestCase
         $this->app->instance(StakeApiService::class, $mock);
     }
 
-    private function casinoBetResponse(): array
+    private function casinoBetResponse(string $game = 'dice', ?array $state = null): array
     {
         return [
             '__typename' => 'Bet',
@@ -35,7 +35,7 @@ class BetLookupTest extends TestCase
             'bet'        => [
                 '__typename' => 'CasinoBet',
                 'id'         => '1',
-                'game'       => 'dice',
+                'game'       => $game,
                 'nonce'      => 42,
                 'clientSeed' => [
                     'id'         => 'cs1',
@@ -48,6 +48,7 @@ class BetLookupTest extends TestCase
                     'seedHash'   => 'abc123hash',
                     '__typename' => 'ServerSeed',
                 ],
+                'state'      => $state,
             ],
         ];
     }
@@ -70,6 +71,76 @@ class BetLookupTest extends TestCase
                         'serverSeed'     => 'myserverseed',
                         'serverSeedHash' => 'abc123hash',
                         'nonce'          => 42,
+                    ],
+                ],
+            ]);
+    }
+
+    #[Test]
+    public function it_includes_mines_count_in_response(): void
+    {
+        $this->mockStakeApiResponse(
+            $this->casinoBetResponse('mines', ['minesCount' => 5])
+        );
+
+        $this->postJson('/api/bet-lookup', ['betId' => 'house:464957124440'])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'data'    => [
+                    'betType' => 'CasinoBet',
+                    'game'    => 'mines',
+                    'inputs'  => [
+                        'clientSeed' => 'myclientseed',
+                        'serverSeed' => 'myserverseed',
+                        'nonce'      => 42,
+                        'minesCount' => 5,
+                    ],
+                ],
+            ]);
+    }
+
+    #[Test]
+    public function it_includes_plinko_risk_and_rows_in_response(): void
+    {
+        $this->mockStakeApiResponse(
+            $this->casinoBetResponse('plinko', ['plinkoRisk' => 'low', 'plinkoRows' => 16])
+        );
+
+        $this->postJson('/api/bet-lookup', ['betId' => 'house:464957124440'])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'data'    => [
+                    'betType' => 'CasinoBet',
+                    'game'    => 'plinko',
+                    'inputs'  => [
+                        'nonce' => 42,
+                        'risk'  => 'low',
+                        'rows'  => 16,
+                    ],
+                ],
+            ]);
+    }
+
+    #[Test]
+    public function it_includes_wheel_risk_and_segments_in_response(): void
+    {
+        $this->mockStakeApiResponse(
+            $this->casinoBetResponse('wheel', ['wheelRisk' => 'medium', 'wheelSegments' => 30])
+        );
+
+        $this->postJson('/api/bet-lookup', ['betId' => 'house:464957124440'])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'data'    => [
+                    'betType' => 'CasinoBet',
+                    'game'    => 'wheel',
+                    'inputs'  => [
+                        'nonce'    => 42,
+                        'risk'     => 'medium',
+                        'segments' => 30,
                     ],
                 ],
             ]);

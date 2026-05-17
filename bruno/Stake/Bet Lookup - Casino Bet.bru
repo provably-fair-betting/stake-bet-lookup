@@ -41,6 +41,47 @@ body:graphql {
             seedHash
             __typename
           }
+          state {
+            ... on CasinoGameBars {
+              barsDifficulty: difficulty
+              barsTiles: tiles
+            }
+            ... on CasinoGameCases {
+              casesDifficulty: difficulty
+            }
+            ... on CasinoGameChicken {
+              chickenDifficulty: difficulty
+            }
+            ... on CasinoGameDarts {
+              dartsDifficulty: difficulty
+            }
+            ... on CasinoGameDragonTower {
+              dragonTowerDifficulty: difficulty
+            }
+            ... on CasinoGameMines {
+              minesCount
+            }
+            ... on CasinoGameMoles {
+              molesCount
+            }
+            ... on CasinoGamePlinko {
+              plinkoRisk: risk
+              plinkoRows: rows
+            }
+            ... on CasinoGamePump {
+              pumpDifficulty: difficulty
+            }
+            ... on CasinoGameSnakes {
+              snakesDifficulty: difficulty
+            }
+            ... on CasinoGameTarot {
+              tarotDifficulty: difficulty
+            }
+            ... on CasinoGameWheel {
+              wheelRisk: risk
+              wheelSegments: segments
+            }
+          }
           __typename
         }
         __typename
@@ -48,30 +89,31 @@ body:graphql {
       __typename
     }
   }
+  
 }
 
 body:graphql:vars {
   {
-    "iid": "{{sampleBetId}}"
+    "iid": "house:477109494905"
   }
 }
 
 docs {
   # Casino Bet Lookup
-
+  
   Fetches casino bet data directly from the Stake.games GraphQL API.
-
+  
   Requires `clearanceCookie` and `userAgent` to be set in the environment.
   Run **Admin → Fetch Clearance** to populate these automatically from the app.
-
+  
   ## Response
-
+  
   - `game`: Game identifier (dice, limbo, plinko, etc.)
   - `nonce`: The nonce value
   - `clientSeed` / `serverSeed`: Provability seeds and hash
-
+  
   ## Troubleshooting
-
+  
   - **403** — Clearance cookie expired; run `npm run capture` from `stake-clearance/`
   - **Null response** — Bet ID not found or invalid format
 }

@@ -33,6 +33,47 @@ query Bet($iid: String!) {
           seedHash
           __typename
         }
+        state {
+          ... on CasinoGameBars {
+            barsDifficulty: difficulty
+            barsTiles: tiles
+          }
+          ... on CasinoGameCases {
+            casesDifficulty: difficulty
+          }
+          ... on CasinoGameChicken {
+            chickenDifficulty: difficulty
+          }
+          ... on CasinoGameDarts {
+            dartsDifficulty: difficulty
+          }
+          ... on CasinoGameDragonTower {
+            dragonTowerDifficulty: difficulty
+          }
+          ... on CasinoGameMines {
+            minesCount
+          }
+          ... on CasinoGameMoles {
+            molesCount
+          }
+          ... on CasinoGamePlinko {
+            plinkoRisk: risk
+            plinkoRows: rows
+          }
+          ... on CasinoGamePump {
+            pumpDifficulty: difficulty
+          }
+          ... on CasinoGameSnakes {
+            snakesDifficulty: difficulty
+          }
+          ... on CasinoGameTarot {
+            tarotDifficulty: difficulty
+          }
+          ... on CasinoGameWheel {
+            wheelRisk: risk
+            wheelSegments: segments
+          }
+        }
         __typename
       }
       ... on MultiplayerCrashBet {

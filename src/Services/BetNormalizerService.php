@@ -29,7 +29,7 @@ class BetNormalizerService
     }
 
     /**
-     * Normalize a CasinoBet (Phase 1).
+     * Normalize a CasinoBet.
      */
     private function normalizeCasinoBet(array $bet): array
     {
@@ -37,16 +37,68 @@ class BetNormalizerService
             throw new SeedNotRevealedException('Server seed has not been revealed for this bet yet.');
         }
 
+        $inputs = [
+            'clientSeed'     => $bet['clientSeed']['seed'] ?? null,
+            'serverSeed'     => $bet['serverSeed']['seed'],
+            'serverSeedHash' => $bet['serverSeed']['seedHash'] ?? null,
+            'nonce'          => $bet['nonce'] ?? null,
+        ];
+
+        $stateInputs = $this->extractStateInputs($bet['state'] ?? []);
+        if (! empty($stateInputs)) {
+            $inputs = array_merge($inputs, $stateInputs);
+        }
+
         return [
             'betType' => 'CasinoBet',
             'game'    => $bet['game'] ?? null,
-            'inputs'  => [
-                'clientSeed'     => $bet['clientSeed']['seed'] ?? null,
-                'serverSeed'     => $bet['serverSeed']['seed'],
-                'serverSeedHash' => $bet['serverSeed']['seedHash'] ?? null,
-                'nonce'          => $bet['nonce'] ?? null,
-            ],
+            'inputs'  => $inputs,
         ];
+    }
+
+    private function extractStateInputs(?array $state): array
+    {
+        if (empty($state)) {
+            return [];
+        }
+
+        if (array_key_exists('barsDifficulty', $state)) {
+            return array_filter([
+                'difficulty' => $state['barsDifficulty'],
+                'tiles'      => $state['barsTiles'] ?? null,
+            ], fn ($v) => $v !== null);
+        }
+
+        foreach (['casesDifficulty', 'chickenDifficulty', 'dartsDifficulty',
+            'dragonTowerDifficulty', 'pumpDifficulty', 'snakesDifficulty', 'tarotDifficulty'] as $key) {
+            if (array_key_exists($key, $state)) {
+                return ['difficulty' => $state[$key]];
+            }
+        }
+
+        if (array_key_exists('minesCount', $state)) {
+            return ['minesCount' => $state['minesCount']];
+        }
+
+        if (array_key_exists('molesCount', $state)) {
+            return ['molesCount' => $state['molesCount']];
+        }
+
+        if (array_key_exists('plinkoRisk', $state)) {
+            return array_filter([
+                'risk' => $state['plinkoRisk'],
+                'rows' => $state['plinkoRows'] ?? null,
+            ], fn ($v) => $v !== null);
+        }
+
+        if (array_key_exists('wheelRisk', $state)) {
+            return array_filter([
+                'risk'     => $state['wheelRisk'],
+                'segments' => $state['wheelSegments'] ?? null,
+            ], fn ($v) => $v !== null);
+        }
+
+        return [];
     }
 
     /**
