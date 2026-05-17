@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/provably-fair-betting/stake-bet-lookup/compare/v1.1.0...v1.2.0) (2026-05-17)
+
+
+### Features
+
+* include game state in casino bet lookup response ([c8074ae](https://github.com/provably-fair-betting/stake-bet-lookup/commit/c8074ae196ff1bae2d9f9eee5bbfb77431982919))
+* include game state in casino bet lookup response ([905d5ba](https://github.com/provably-fair-betting/stake-bet-lookup/commit/905d5ba444697f271d7a5f19153242a143fd00ea))
+
 ## [1.1.0](https://github.com/provably-fair-betting/stake-bet-lookup/compare/v1.0.2...v1.1.0) (2026-05-16)
 
 
