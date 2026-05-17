@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Coverage
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
 
     steps:
       - uses: actions/checkout@v4
