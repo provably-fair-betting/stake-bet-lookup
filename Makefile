@@ -19,7 +19,7 @@ setup:
 	@APP_KEY_VAL=$$(grep "^APP_KEY=" .env | cut -d'=' -f2-); \
 	if [ -z "$$APP_KEY_VAL" ]; then \
 		KEY=$$(docker run --rm --entrypoint php stake-bet-lookup:local artisan key:generate --show); \
-		{ tmp=$$(mktemp); sed "s|^APP_KEY=.*|APP_KEY=$$KEY|" .env > "$$tmp" && mv "$$tmp" .env; }; \
+		{ tmp=$$(mktemp /tmp/stake-env-XXXXXX); sed "s|^APP_KEY=.*|APP_KEY=$$KEY|" .env > "$$tmp" && mv "$$tmp" .env; }; \
 		echo "  ✓ APP_KEY generated"; \
 	else \
 		echo "  ✓ APP_KEY already set"; \
@@ -65,7 +65,7 @@ restart:
 
 ## Open a shell in the app container
 shell:
-	docker compose exec app bash
+	docker compose exec app sh
 
 ## Run database migrations
 migrate:
@@ -116,7 +116,7 @@ token:
 _generate-token:
 	@RAW=$$(openssl rand -hex 32); \
 	HASH=$$(printf '%s' "$$RAW" | openssl dgst -sha256 | awk '{print $$NF}'); \
-	{ tmp=$$(mktemp); sed "s|^STAKE_ADMIN_TOKEN=.*|STAKE_ADMIN_TOKEN=$$HASH|" .env > "$$tmp" && mv "$$tmp" .env; }; \
+	{ tmp=$$(mktemp /tmp/stake-env-XXXXXX); sed "s|^STAKE_ADMIN_TOKEN=.*|STAKE_ADMIN_TOKEN=$$HASH|" .env > "$$tmp" && mv "$$tmp" .env; }; \
 	printf '{\n  "method": "api",\n  "api": {\n    "endpoint": "http://localhost:%s/api/admin/update-clearance",\n    "token": "%s"\n  }\n}\n' "$${PORT:-8080}" "$$RAW" > scripts/sync-config.json; \
 	echo "  ✓ STAKE_ADMIN_TOKEN generated"; \
 	echo "  ✓ scripts/sync-config.json written"
