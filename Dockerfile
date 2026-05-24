@@ -1,47 +1,50 @@
-# Self-contained image — no local app/ directory required, no secrets baked in.
-# All sensitive values (APP_KEY, STAKE_ADMIN_TOKEN) are runtime environment variables.
+# Multi-stage build — builder compiles PHP extensions and installs the Laravel
+# app; the runtime stage copies only what is needed to run, keeping the final
+# image lean (~350-400 MB vs ~1 GB single-stage Debian).
 #
-# Builds the Laravel application from scratch inside Docker using the
-# stake/bet-lookup Composer package bundled alongside this Dockerfile.
+# All sensitive values (APP_KEY, STAKE_ADMIN_TOKEN) are runtime environment
+# variables — nothing secret is baked into the image.
 
-FROM php:8.2-fpm
+# ── Builder ───────────────────────────────────────────────────────────────────
+FROM php:8.2-fpm-alpine AS builder
 
-# ── System dependencies ────────────────────────────────────────────────────────
-RUN apt-get update && apt-get install -y \
-        git curl libpng-dev libonig-dev libxml2-dev zip unzip \
-        nginx supervisor \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Build-time only: headers for PHP extension compilation + Composer tools
+RUN apk add --no-cache \
+        git curl zip unzip \
+        libpng-dev oniguruma-dev libxml2-dev
+
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Avoid OOM during composer install
 ENV COMPOSER_MEMORY_LIMIT=-1
 
-# ── Package source ─────────────────────────────────────────────────────────────
-COPY . /var/laravel-package/
-
-# ── Bootstrap the Laravel application ─────────────────────────────────────────
-# --no-install defers the install until after the path repository is configured,
-# so everything resolves in a single composer pass.
+# ── Scaffold Laravel (cached until laravel/laravel:^12.0 bumps) ───────────────
+# --no-install defers composer install until after the path repository is
+# configured, so everything resolves in a single pass.
 # WORKDIR / avoids deleting the shell's own CWD (php:8.2-fpm defaults to /var/www/html).
 WORKDIR /
 RUN rm -rf /var/www/html \
     && composer create-project laravel/laravel:^12.0 /var/www \
         --prefer-dist --no-install --no-scripts \
     && cd /var/www \
-    && composer config platform.php 8.2 \
+    && composer config platform.php 8.2
+
+# ── Package source (invalidates cache from here on code changes) ──────────────
+COPY . /var/laravel-package/
+
+# ── Install package into Laravel ──────────────────────────────────────────────
+RUN cd /var/www \
     && composer config repositories.bet-lookup \
         '{"type":"path","url":"/var/laravel-package","options":{"symlink":false}}' \
     && composer require stake/bet-lookup \
     && php artisan package:discover --ansi
 
-# ── Publish config and migrations ─────────────────────────────────────────────
 RUN cd /var/www \
     && php artisan vendor:publish --tag=bet-lookup-config --quiet \
     && php artisan vendor:publish --tag=bet-lookup-migrations --quiet
 
-# ── Strip unused Laravel scaffolding ──────────────────────────────────────────
+# Strip unused Laravel scaffolding
 RUN echo "<?php" > /var/www/routes/web.php \
     && rm -rf /var/www/resources/js \
               /var/www/resources/css \
@@ -52,15 +55,25 @@ RUN echo "<?php" > /var/www/routes/web.php \
 
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# ── nginx ──────────────────────────────────────────────────────────────────────
-RUN rm -f /etc/nginx/sites-enabled/default
-COPY docker/nginx.conf /etc/nginx/sites-enabled/default
+# ── Runtime ───────────────────────────────────────────────────────────────────
+FROM php:8.2-fpm-alpine AS runtime
 
-# ── supervisor ─────────────────────────────────────────────────────────────────
+# Runtime shared libraries — no headers, no build tools, no composer
+RUN apk add --no-cache \
+        nginx supervisor \
+        libpng oniguruma libxml2
+
+# PHP extensions compiled in the builder stage
+COPY --from=builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+COPY --from=builder /usr/local/etc/php/conf.d     /usr/local/etc/php/conf.d
+
+# Application
+COPY --from=builder /var/www /var/www
+
+# Alpine nginx serves from /etc/nginx/http.d/ (not sites-enabled)
+COPY docker/nginx.conf       /etc/nginx/http.d/default.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# ── Entrypoint ─────────────────────────────────────────────────────────────────
-COPY docker/entrypoint.sh /entrypoint.sh
+COPY docker/entrypoint.sh    /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 WORKDIR /var/www

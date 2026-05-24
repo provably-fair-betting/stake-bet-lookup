@@ -125,6 +125,35 @@ php artisan vendor:publish --tag=bet-lookup-bruno
 
 ---
 
+## Docker Image
+
+A pre-built image is published to GitHub Container Registry on every release:
+
+```
+ghcr.io/provably-fair-betting/stake-bet-lookup:<version>
+```
+
+| Tag pattern | Example | Updates on |
+|---|---|---|
+| `1.2.3` | exact version | that release only |
+| `1.2` | minor float | patch releases |
+| `1` | major float | minor + patch releases |
+
+The image (~350–400 MB, Alpine-based) bundles Nginx + PHP-FPM via Supervisor. It requires no local PHP or Composer — all runtime secrets are injected via environment variables.
+
+**Required environment variables:**
+
+| Variable | Description |
+|---|---|
+| `APP_KEY` | Laravel application key (`base64:...`) |
+| `STAKE_ADMIN_TOKEN` | SHA-256 hash of the raw admin bearer token |
+
+See the [integration environment](https://github.com/provably-fair-betting/verifierform-stake-env) for a ready-made Docker Compose setup that wires this image together with the frontend.
+
+The [publish workflow](.github/workflows/publish.yml) triggers automatically when release-please merges a release PR and pushes a version tag. It builds and publishes the major, minor, and patch floating tags to ghcr.io.
+
+---
+
 ## Documentation
 
 - [Production setup](docs/setup.md) — install, configure, and deploy in a Laravel app

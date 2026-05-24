@@ -92,8 +92,19 @@ Generates a new token pair, writes the hash to `.env` and the raw token to `scri
 
 ## Rebuilding After Package Changes
 
-The app code is baked into the image. After editing package source:
+The app code is baked into the image. After editing package source, rebuild explicitly then restart:
 
 ```bash
-make up  # rebuilds the image automatically (--build is passed)
+docker compose build app   # rebuilds the image
+make up                    # starts with the new image
 ```
+
+Or combined in one step:
+
+```bash
+docker compose up -d --build app
+```
+
+`make up` does **not** rebuild automatically — it starts whatever image was last built. This avoids a full rebuild on every `make up` when nothing has changed.
+
+Thanks to layer ordering in the Dockerfile, only the `composer require` step re-runs on source changes (~45–90 s). The `composer create-project` layer stays cached unless the Laravel version itself bumps.

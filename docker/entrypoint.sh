@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 # ── Validate required runtime secrets ─────────────────────────────────────────
@@ -26,5 +26,8 @@ if [ -z "$STAKE_ADMIN_TOKEN" ]; then
     echo ""
     exit 1
 fi
+
+# Ensure writable dirs are owned by the php-fpm user regardless of prior state
+chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
 exec "$@"
