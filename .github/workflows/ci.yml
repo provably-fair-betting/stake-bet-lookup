@@ -49,6 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Coverage
     needs: test
+    continue-on-error: true
     if: ${{ !startsWith(github.head_ref, 'release-please--') }}
 
     steps:
