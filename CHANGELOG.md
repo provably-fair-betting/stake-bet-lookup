@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4](https://github.com/provably-fair-betting/stake-bet-lookup/compare/v1.2.3...v1.2.4) (2026-05-25)
+
+
+### Bug Fixes
+
+* add --no-scripts to composer require, gate publish on ci-complete ([66847e3](https://github.com/provably-fair-betting/stake-bet-lookup/commit/66847e30244aa659ffb0885379d860a94424d51e))
+* add --no-scripts to composer require, gate publish on ci-complete ([c783ccf](https://github.com/provably-fair-betting/stake-bet-lookup/commit/c783ccf32818be49034fafdfbdb7ef686030bee0))
+
 ## [1.2.3](https://github.com/provably-fair-betting/stake-bet-lookup/compare/v1.2.2...v1.2.3) (2026-05-25)
 
 
