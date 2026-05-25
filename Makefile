@@ -1,7 +1,7 @@
 SHELL := /bin/zsh
 DIV   := ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-.PHONY: setup up down restart shell migrate logs capture token test coverage db adminer reset _generate-token
+.PHONY: setup build up down restart shell migrate logs capture token test coverage db adminer reset _generate-token
 
 ## First-time setup: copy .env, build image, generate secrets, install capture deps
 setup:
@@ -45,7 +45,12 @@ setup:
 	@echo "$(DIV)"
 	@echo ""
 
-## Start all services (use 'make setup' or 'docker compose build' to rebuild)
+## Rebuild the app image and prune dangling images left by the previous build
+build:
+	docker compose build app
+	docker image prune -f
+
+## Start all services (use 'make build' to rebuild after source changes)
 up:
 	docker compose up -d
 	@echo ""

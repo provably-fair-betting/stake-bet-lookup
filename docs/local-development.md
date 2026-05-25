@@ -39,6 +39,7 @@ No manual `.env` edits required — `make setup` generates everything automatica
 
 ```bash
 make setup            # First-time setup
+make build            # Rebuild app image after source changes (prunes old image)
 make up               # Start all services
 make down             # Stop all services
 make restart          # Restart the app container
@@ -92,19 +93,15 @@ Generates a new token pair, writes the hash to `.env` and the raw token to `scri
 
 ## Rebuilding After Package Changes
 
-The app code is baked into the image. After editing package source, rebuild explicitly then restart:
+The app code is baked into the image. After editing package source:
 
 ```bash
-docker compose build app   # rebuilds the image
-make up                    # starts with the new image
-```
-
-Or combined in one step:
-
-```bash
-docker compose up -d --build app
+make build   # rebuilds the image and prunes the previous dangling image
+make up      # starts with the new image
 ```
 
 `make up` does **not** rebuild automatically — it starts whatever image was last built. This avoids a full rebuild on every `make up` when nothing has changed.
+
+Each `make build` replaces the previous image. Without pruning, the old image becomes a dangling `<none>:<none>` entry and accumulates on disk — `make build` handles this automatically with `docker image prune -f`.
 
 Thanks to layer ordering in the Dockerfile, only the `composer require` step re-runs on source changes (~45–90 s). The `composer create-project` layer stays cached unless the Laravel version itself bumps.
