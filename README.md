@@ -133,11 +133,11 @@ A pre-built image is published to GitHub Container Registry on every release:
 ghcr.io/provably-fair-betting/stake-bet-lookup:<version>
 ```
 
-| Tag pattern | Example | Updates on |
+| Tag pattern | Resolves to | Updates on |
 |---|---|---|
-| `1.2.3` | exact version | that release only |
-| `1.2` | minor float | patch releases |
-| `1` | major float | minor + patch releases |
+| `1.2.3` | `1.2.3` | that release only |
+| `1.2` | `1.2`, `1.3`, … | patch releases |
+| `1` | `1`, `2`, … | minor + patch releases |
 
 The image (~350–400 MB, Alpine-based) bundles Nginx + PHP-FPM via Supervisor. It requires no local PHP or Composer — all runtime secrets are injected via environment variables.
 

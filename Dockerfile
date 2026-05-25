@@ -38,7 +38,8 @@ RUN cd /var/www \
     && composer config repositories.bet-lookup \
         '{"type":"path","url":"/var/laravel-package","options":{"symlink":false}}' \
     && composer require stake/bet-lookup \
-    && php artisan package:discover --ansi
+    && php artisan package:discover --ansi \
+    && composer install --no-dev --optimize-autoloader
 
 RUN cd /var/www \
     && php artisan vendor:publish --tag=bet-lookup-config --quiet \
