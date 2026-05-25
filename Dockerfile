@@ -34,15 +34,15 @@ RUN rm -rf /var/www/html \
 COPY . /var/laravel-package/
 
 # ── Install package into Laravel ──────────────────────────────────────────────
-# --no-install defers the actual install so a single composer install pass can
-# strip dev dependencies and optimise the autoloader in one step.
-# --no-scripts skips Laravel's post-install hooks (vendor:publish laravel-assets)
-# which require vendor/autoload.php to already exist — package:discover covers
-# the only hook we need.
+# --no-install defers the actual package installation so a single composer
+# install pass strips dev deps and optimises the autoloader in one step.
+# --no-scripts on both commands skips Laravel's post-update/install hooks
+# (vendor:publish laravel-assets) which need vendor/autoload.php to exist;
+# package:discover runs manually afterwards as the only hook we need.
 RUN cd /var/www \
     && composer config repositories.bet-lookup \
         '{"type":"path","url":"/var/laravel-package","options":{"symlink":false}}' \
-    && composer require stake/bet-lookup --no-install \
+    && composer require stake/bet-lookup --no-install --no-scripts \
     && composer install --no-dev --optimize-autoloader --no-scripts \
     && php artisan package:discover --ansi
 
