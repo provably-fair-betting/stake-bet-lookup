@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2](https://github.com/provably-fair-betting/stake-bet-lookup/compare/v1.2.1...v1.2.2) (2026-05-25)
+
+
+### Bug Fixes
+
+* address Copilot review comments ([f899d3a](https://github.com/provably-fair-betting/stake-bet-lookup/commit/f899d3a5a84fb746164a9c7dd062124541a9117f))
+* address second round of Copilot review comments ([3a58a51](https://github.com/provably-fair-betting/stake-bet-lookup/commit/3a58a514428bddd3dd603c594b4e2bab5ceb5b9f))
+* scope image cleanup to stake-bet-lookup:local, fix tag table, single composer pass ([6955f08](https://github.com/provably-fair-betting/stake-bet-lookup/commit/6955f08eb6e4f46e4365d0322ca83b94b21155a1))
+* unify image name between make setup and docker compose ([d67eeca](https://github.com/provably-fair-betting/stake-bet-lookup/commit/d67eecaf94a1f088c3908ae00fcd0b3e6f7bb6b0))
+
+
+### Miscellaneous Chores
+
+* add make build target to prune dangling images after rebuild ([bbb8fc6](https://github.com/provably-fair-betting/stake-bet-lookup/commit/bbb8fc62e951b20e62688af90b82c39d8a3ea77a))
+* switch to Alpine multi-stage Dockerfile and add ghcr.io publish workflow ([f42232b](https://github.com/provably-fair-betting/stake-bet-lookup/commit/f42232b1414e8fecc0f8a62c41c234e9c97dd3d2))
+
 ## [1.2.1](https://github.com/provably-fair-betting/stake-bet-lookup/compare/v1.2.0...v1.2.1) (2026-05-17)
 
 
