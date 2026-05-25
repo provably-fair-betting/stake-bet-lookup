@@ -1,7 +1,7 @@
 SHELL := /bin/zsh
 DIV   := ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-.PHONY: setup up down restart shell migrate logs capture token test coverage db adminer reset
+.PHONY: setup build up down restart shell migrate logs capture token test coverage db adminer reset _generate-token
 
 ## First-time setup: copy .env, build image, generate secrets, install capture deps
 setup:
@@ -19,19 +19,14 @@ setup:
 	@APP_KEY_VAL=$$(grep "^APP_KEY=" .env | cut -d'=' -f2-); \
 	if [ -z "$$APP_KEY_VAL" ]; then \
 		KEY=$$(docker run --rm --entrypoint php stake-bet-lookup:local artisan key:generate --show); \
-		sed -i.bak "s|^APP_KEY=.*|APP_KEY=$$KEY|" .env && rm .env.bak; \
+		{ tmp=$$(mktemp /tmp/stake-env-XXXXXX); sed "s|^APP_KEY=.*|APP_KEY=$$KEY|" .env > "$$tmp" && mv "$$tmp" .env; }; \
 		echo "  ✓ APP_KEY generated"; \
 	else \
 		echo "  ✓ APP_KEY already set"; \
 	fi
 	@ADMIN_VAL=$$(grep "^STAKE_ADMIN_TOKEN=" .env | cut -d'=' -f2-); \
 	if [ -z "$$ADMIN_VAL" ]; then \
-		RAW=$$(openssl rand -hex 32); \
-		HASH=$$(printf '%s' "$$RAW" | openssl dgst -sha256 | awk '{print $$NF}'); \
-		sed -i.bak "s|^STAKE_ADMIN_TOKEN=.*|STAKE_ADMIN_TOKEN=$$HASH|" .env && rm .env.bak; \
-		printf '{\n  "method": "api",\n  "api": {\n    "endpoint": "http://localhost:%s/api/admin/update-clearance",\n    "token": "%s"\n  }\n}\n' "$${PORT:-8080}" "$$RAW" > scripts/sync-config.json; \
-		echo "  ✓ STAKE_ADMIN_TOKEN generated"; \
-		echo "  ✓ scripts/sync-config.json written"; \
+		$(MAKE) -s _generate-token; \
 	else \
 		echo "  ✓ STAKE_ADMIN_TOKEN already set"; \
 	fi
@@ -50,9 +45,18 @@ setup:
 	@echo "$(DIV)"
 	@echo ""
 
-## Start all services
+## Rebuild the app image and remove the previous stake-bet-lookup:local if it was replaced
+build:
+	@OLD_ID=$$(docker images -q stake-bet-lookup:local 2>/dev/null); \
+	docker compose build app; \
+	NEW_ID=$$(docker images -q stake-bet-lookup:local 2>/dev/null); \
+	if [ -n "$$OLD_ID" ] && [ "$$OLD_ID" != "$$NEW_ID" ]; then \
+		docker rmi "$$OLD_ID" 2>/dev/null || true; \
+	fi
+
+## Start all services (use 'make build' to rebuild after source changes)
 up:
-	docker compose up -d --build
+	docker compose up -d
 	@echo ""
 	@echo "  App:     http://localhost:$${PORT:-8080}"
 	@echo "  Mailpit: http://localhost:8025"
@@ -70,7 +74,7 @@ restart:
 
 ## Open a shell in the app container
 shell:
-	docker compose exec app bash
+	docker compose exec app sh
 
 ## Run database migrations
 migrate:
@@ -93,7 +97,7 @@ capture:
 	@echo "$(DIV)"
 	@echo "  Capture Clearance Credentials"
 	@echo "$(DIV)"
-	@VALID=$$(docker compose exec -T app php artisan stake:check-clearance 2>&1 | grep -c "^Status: Active"); \
+	@VALID=$$(docker compose exec -T app php artisan stake:check-clearance 2>&1 | grep -c "^Probe: Active"); \
 	if [ "$$VALID" != "0" ] && [ "$(force)" != "1" ]; then \
 		echo "  Clearance still valid — skipping."; \
 		echo "  Run 'make capture force=1' to force renewal."; \
@@ -112,14 +116,19 @@ token:
 	@echo "$(DIV)"
 	@echo "  Admin Token Rotation"
 	@echo "$(DIV)"
+	@$(MAKE) -s _generate-token
+	@echo ""
+	@echo "  Run 'make restart' to apply."
+	@echo ""
+
+# Internal: generate a fresh STAKE_ADMIN_TOKEN pair and write to .env + sync-config.json
+_generate-token:
 	@RAW=$$(openssl rand -hex 32); \
 	HASH=$$(printf '%s' "$$RAW" | openssl dgst -sha256 | awk '{print $$NF}'); \
-	sed -i.bak "s|^STAKE_ADMIN_TOKEN=.*|STAKE_ADMIN_TOKEN=$$HASH|" .env && rm .env.bak; \
+	{ tmp=$$(mktemp /tmp/stake-env-XXXXXX); sed "s|^STAKE_ADMIN_TOKEN=.*|STAKE_ADMIN_TOKEN=$$HASH|" .env > "$$tmp" && mv "$$tmp" .env; }; \
 	printf '{\n  "method": "api",\n  "api": {\n    "endpoint": "http://localhost:%s/api/admin/update-clearance",\n    "token": "%s"\n  }\n}\n' "$${PORT:-8080}" "$$RAW" > scripts/sync-config.json; \
-	echo "  ✓ New token written to .env and scripts/sync-config.json"; \
-	echo ""; \
-	echo "  Run 'make restart' to apply."
-	@echo ""
+	echo "  ✓ STAKE_ADMIN_TOKEN generated"; \
+	echo "  ✓ scripts/sync-config.json written"
 
 ## Wipe all Docker volumes (fresh database)
 reset:

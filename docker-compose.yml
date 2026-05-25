@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: stake-bet-lookup:local
     ports:
       - "${PORT:-8080}:80"
     env_file:
