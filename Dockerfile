@@ -34,12 +34,14 @@ RUN rm -rf /var/www/html \
 COPY . /var/laravel-package/
 
 # ── Install package into Laravel ──────────────────────────────────────────────
+# --no-install defers the actual install so a single composer install pass can
+# strip dev dependencies and optimise the autoloader in one step.
 RUN cd /var/www \
     && composer config repositories.bet-lookup \
         '{"type":"path","url":"/var/laravel-package","options":{"symlink":false}}' \
-    && composer require stake/bet-lookup \
-    && php artisan package:discover --ansi \
-    && composer install --no-dev --optimize-autoloader
+    && composer require stake/bet-lookup --no-install \
+    && composer install --no-dev --optimize-autoloader \
+    && php artisan package:discover --ansi
 
 RUN cd /var/www \
     && php artisan vendor:publish --tag=bet-lookup-config --quiet \

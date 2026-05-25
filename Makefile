@@ -45,10 +45,14 @@ setup:
 	@echo "$(DIV)"
 	@echo ""
 
-## Rebuild the app image and prune dangling images left by the previous build
+## Rebuild the app image and remove the previous stake-bet-lookup:local if it was replaced
 build:
-	docker compose build app
-	docker image prune -f
+	@OLD_ID=$$(docker images -q stake-bet-lookup:local 2>/dev/null); \
+	docker compose build app; \
+	NEW_ID=$$(docker images -q stake-bet-lookup:local 2>/dev/null); \
+	if [ -n "$$OLD_ID" ] && [ "$$OLD_ID" != "$$NEW_ID" ]; then \
+		docker rmi "$$OLD_ID" 2>/dev/null || true; \
+	fi
 
 ## Start all services (use 'make build' to rebuild after source changes)
 up:
