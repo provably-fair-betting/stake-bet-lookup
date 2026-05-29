@@ -70,7 +70,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: provably-fair-betting/stake-bet-lookup
+          slug: provably-fair-betting/verifierform-stake-bet-lookup
 
   publish:
     runs-on: ubuntu-latest

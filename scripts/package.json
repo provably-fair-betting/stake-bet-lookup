@@ -1,5 +1,5 @@
 {
-  "name": "stake-bet-lookup-scripts",
+  "name": "verifierform-stake-bet-lookup-scripts",
   "version": "1.0.0",
   "description": "Utility scripts for capturing Stake.games clearance cookies and testing the API",
   "type": "module",
