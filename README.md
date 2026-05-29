@@ -1,8 +1,8 @@
-[![CI](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/ci.yml/badge.svg)](https://github.com/provably-fair-betting/stake-bet-lookup/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/github/v/release/provably-fair-betting/stake-bet-lookup)](https://github.com/provably-fair-betting/stake-bet-lookup/releases/latest)
-[![Coverage](https://codecov.io/gh/provably-fair-betting/stake-bet-lookup/graph/badge.svg)](https://codecov.io/gh/provably-fair-betting/stake-bet-lookup)
+[![CI](https://github.com/provably-fair-betting/verifierform-stake-bet-lookup/actions/workflows/ci.yml/badge.svg)](https://github.com/provably-fair-betting/verifierform-stake-bet-lookup/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/release/provably-fair-betting/verifierform-stake-bet-lookup)](https://github.com/provably-fair-betting/verifierform-stake-bet-lookup/releases/latest)
+[![Coverage](https://codecov.io/gh/provably-fair-betting/verifierform-stake-bet-lookup/graph/badge.svg)](https://codecov.io/gh/provably-fair-betting/verifierform-stake-bet-lookup)
 
-# stake-bet-lookup
+# verifierform-stake-bet-lookup
 
 A Laravel package that exposes a public REST API for looking up Stake.games bet data. Given a bet ID, it fetches the provably fair seeds, nonce, and game-specific state from the Stake.games GraphQL API and returns a normalised response ready for use in a verifier frontend.
 
@@ -130,7 +130,7 @@ php artisan vendor:publish --tag=bet-lookup-bruno
 A pre-built image is published to GitHub Container Registry on every release:
 
 ```
-ghcr.io/provably-fair-betting/stake-bet-lookup:<version>
+ghcr.io/provably-fair-betting/verifierform-stake-bet-lookup:<version>
 ```
 
 | Tag pattern | Resolves to | Updates on |
