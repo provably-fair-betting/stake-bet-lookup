@@ -13,7 +13,7 @@ Add the repository to your `composer.json` and require the package:
   "repositories": [
     {
       "type": "vcs",
-      "url": "https://github.com/provably-fair-betting/stake-bet-lookup.git"
+      "url": "https://github.com/provably-fair-betting/verifierform-stake-bet-lookup.git"
     }
   ]
 }

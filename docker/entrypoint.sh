@@ -10,7 +10,7 @@ if [ -z "$APP_KEY" ]; then
     echo "ERROR: APP_KEY is required."
     echo ""
     echo "Generate one with:"
-    echo "  docker run --rm --entrypoint php stake-bet-lookup:standalone artisan key:generate --show"
+    echo "  docker run --rm --entrypoint php verifierform-stake-bet-lookup:standalone artisan key:generate --show"
     echo ""
     exit 1
 fi

@@ -15,10 +15,10 @@ setup:
 		echo "  → .env created from .env.example"; \
 	fi
 	@echo "  → Building image (this takes a minute on first run)..."
-	@docker build -t stake-bet-lookup:local . --progress=plain
+	@docker build -t verifierform-stake-bet-lookup:local . --progress=plain
 	@APP_KEY_VAL=$$(grep "^APP_KEY=" .env | cut -d'=' -f2-); \
 	if [ -z "$$APP_KEY_VAL" ]; then \
-		KEY=$$(docker run --rm --entrypoint php stake-bet-lookup:local artisan key:generate --show); \
+		KEY=$$(docker run --rm --entrypoint php verifierform-stake-bet-lookup:local artisan key:generate --show); \
 		{ tmp=$$(mktemp /tmp/stake-env-XXXXXX); sed "s|^APP_KEY=.*|APP_KEY=$$KEY|" .env > "$$tmp" && mv "$$tmp" .env; }; \
 		echo "  ✓ APP_KEY generated"; \
 	else \
@@ -45,11 +45,11 @@ setup:
 	@echo "$(DIV)"
 	@echo ""
 
-## Rebuild the app image and remove the previous stake-bet-lookup:local if it was replaced
+## Rebuild the app image and remove the previous verifierform-stake-bet-lookup:local if it was replaced
 build:
-	@OLD_ID=$$(docker images -q stake-bet-lookup:local 2>/dev/null); \
+	@OLD_ID=$$(docker images -q verifierform-stake-bet-lookup:local 2>/dev/null); \
 	docker compose build app; \
-	NEW_ID=$$(docker images -q stake-bet-lookup:local 2>/dev/null); \
+	NEW_ID=$$(docker images -q verifierform-stake-bet-lookup:local 2>/dev/null); \
 	if [ -n "$$OLD_ID" ] && [ "$$OLD_ID" != "$$NEW_ID" ]; then \
 		docker rmi "$$OLD_ID" 2>/dev/null || true; \
 	fi
