@@ -2,7 +2,7 @@
     "name": "stake/bet-lookup",
     "description": "Laravel package for Stake.games bet lookup and GraphQL proxy",
     "type": "library",
-    "version": "1.2.4",
+    "version": "2.0.0",
     "license": "MIT",
     "autoload": {
         "psr-4": {
