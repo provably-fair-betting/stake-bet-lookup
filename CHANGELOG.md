@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0](https://github.com/provably-fair-betting/verifierform-stake-bet-lookup/compare/v1.2.4...v2.0.0) (2026-05-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* published Docker image is now ghcr.io/provably-fair-betting/verifierform-stake-bet-lookup
+
+### Features
+
+* rename project to verifierform-stake-bet-lookup ([#21](https://github.com/provably-fair-betting/verifierform-stake-bet-lookup/issues/21)) ([e9ad0bb](https://github.com/provably-fair-betting/verifierform-stake-bet-lookup/commit/e9ad0bb879634df2340abf1feeb4b2ea3d18aeef))
+
 ## [1.2.4](https://github.com/provably-fair-betting/stake-bet-lookup/compare/v1.2.3...v1.2.4) (2026-05-25)
 
 
