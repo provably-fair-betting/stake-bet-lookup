@@ -138,15 +138,18 @@ The package appends a new row on each credential update rather than updating in 
 Published to `config/bet-lookup.php` in the consuming app. All values read from `.env`:
 
 ```php
-// Key settings
-'stake_api_url'                => env('STAKE_API_URL', 'https://stake.games/_api/graphql'),
-'stake_clearance_cookie'       => env('STAKE_CLEARANCE_COOKIE'),
-'stake_user_agent'             => env('STAKE_USER_AGENT'),
-'stake_clearance_expiry'       => env('STAKE_CLEARANCE_EXPIRY'),
-'admin_token'                  => env('STAKE_ADMIN_TOKEN'),
-'clearance_alert_email'        => env('STAKE_CLEARANCE_ALERT_EMAIL'),
-'clearance_warning_threshold'  => env('STAKE_CLEARANCE_WARNING_THRESHOLD', 3600),
-'cache_ttl'                    => env('BET_LOOKUP_CACHE_TTL', 300),
-'rate_limit'                   => env('BET_LOOKUP_RATE_LIMIT', 60),
-'timeout'                      => env('BET_LOOKUP_TIMEOUT', 10),
+return [
+    'stake_api_url'               => env('STAKE_API_URL', 'https://stake.games/_api/graphql'),
+    'stake_clearance_cookie'      => env('STAKE_CLEARANCE_COOKIE'),
+    'stake_user_agent'            => env('STAKE_USER_AGENT'),
+    'stake_clearance_expiry'      => env('STAKE_CLEARANCE_EXPIRY'),
+    'admin_token'                 => env('STAKE_ADMIN_TOKEN'),
+    'clearance_alert_email'       => env('STAKE_CLEARANCE_ALERT_EMAIL'),
+    'clearance_warning_threshold' => env('STAKE_CLEARANCE_WARNING_THRESHOLD', 3600),
+    'cache_ttl'                   => env('BET_LOOKUP_CACHE_TTL', 300),
+    'rate_limit'                  => env('BET_LOOKUP_RATE_LIMIT', 60),
+    'timeout'                     => env('BET_LOOKUP_TIMEOUT', 10),
+];
 ```
+
+See [Production Setup](../docs/setup.md) for the full `.env` reference.
