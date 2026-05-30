@@ -70,24 +70,12 @@ After `make setup`, `make capture` works immediately.
 
 ## Clearance Renewal
 
-Cloudflare clearance credentials expire periodically. When they do, the API returns `503` for all bet lookups:
-
 ```bash
 make capture          # Capture + sync (skips if still valid)
 make capture force=1  # Force renewal
 ```
 
-`make capture` opens a Chrome window at stake.games, waits for you to complete the challenge, then POSTs credentials directly to the running app.
-
----
-
-## Token Rotation
-
-```bash
-make token
-```
-
-Generates a new token pair, writes the hash to `.env` and the raw token to `scripts/sync-config.json`, then prompts you to `make restart`.
+See [clearance-management.md](clearance-management.md) for the full operational reference, including status checks and token rotation.
 
 ---
 
